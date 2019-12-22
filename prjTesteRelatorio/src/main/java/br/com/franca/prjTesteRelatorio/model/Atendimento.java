@@ -30,6 +30,7 @@ public class Atendimento implements Serializable {
 	private Date dataVisita;
 	@OneToOne
 	private TipoSolicitacao tipoSolicitacao = new TipoSolicitacao();
+	private String nomeCanteiro;
 	private Long ordemVazao;
 	private String descricaoVazao;
 	private Long qtdAtuacoesOcorrencias;
@@ -47,6 +48,17 @@ public class Atendimento implements Serializable {
 		this.qtdAtuacoesExecutadas = qtdAtuacoesExecutadas;
 		this.qtdAtuacoesTotal = qtdAtuacoesTotal;
 	}
+
+	@Override
+	public String toString() {
+		return "Atendimento [id=" + id + ", descricaoLote=" + descricaoLote + ", dataVisita=" + dataVisita
+				+ ", tipoSolicitacao=" + tipoSolicitacao.getDescricaoTpoSolicitacao() + ", nomeCanteiro=" + nomeCanteiro + ", ordemVazao="
+				+ ordemVazao + ", descricaoVazao=" + descricaoVazao + ", qtdAtuacoesOcorrencias="
+				+ qtdAtuacoesOcorrencias + ", qtdAtuacoesExecutadas=" + qtdAtuacoesExecutadas + ", qtdAtuacoesTotal="
+				+ qtdAtuacoesTotal + "]";
+	}
+	
+	
 	
 	
 }
