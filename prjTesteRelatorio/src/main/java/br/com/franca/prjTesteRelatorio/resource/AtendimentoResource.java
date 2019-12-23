@@ -19,10 +19,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.franca.prjTesteRelatorio.model.Atendimento;
-import br.com.franca.prjTesteRelatorio.model.RelatorioCorteMedicaoResponse;
-import br.com.franca.prjTesteRelatorio.model.TipoSolicitacao;
-import br.com.franca.prjTesteRelatorio.model.TotalAtuacao;
 import br.com.franca.prjTesteRelatorio.model.Vazao;
+import br.com.franca.prjTesteRelatorio.model.dto.RelatorioDTO;
+import br.com.franca.prjTesteRelatorio.model.dto.TipoSolicitacaoDTO;
+import br.com.franca.prjTesteRelatorio.model.dto.TotalAtuacaoDTO;
+import br.com.franca.prjTesteRelatorio.model.dto.VazaoDTO;
 import br.com.franca.prjTesteRelatorio.repository.AtendimentoRepository;
 import br.com.franca.prjTesteRelatorio.repository.VazaoRepository;
 import br.com.franca.prjTesteRelatorio.util.Utilitaria;
@@ -33,7 +34,7 @@ public class AtendimentoResource {
 
 	private AtendimentoRepository atendimentoRepository;
 	private VazaoRepository vazaoRepository;
-	private List<Date> listaPeriodoDate = new ArrayList<>();	
+	private List<Date> listaPeriodoDate = new ArrayList<>();
 
 	public AtendimentoResource(AtendimentoRepository atendimentoRepository, VazaoRepository vazaoRepository) {
 		this.atendimentoRepository = atendimentoRepository;
@@ -41,21 +42,19 @@ public class AtendimentoResource {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, path = "/todos")
-	public List<Atendimento> buscarTodos() {
-		
-		RelatorioCorteMedicaoResponse relatorioCorteMedicaoResponse = new RelatorioCorteMedicaoResponse();
-		TipoSolicitacao tipoSolicitacao = null;
-		
-		List<Date>listaDataSemAtendimento = new ArrayList<>();
-		Calendar dataInicio = Calendar.getInstance(); 
+	public RelatorioDTO buscarTodos() {
+
+		RelatorioDTO relatorio = new RelatorioDTO();
+
+		TipoSolicitacaoDTO tipoSolicitacaoDTO = null;
+
+		List<Date> listaDataSemAtendimento = new ArrayList<>();
+
+		Calendar dataInicio = Calendar.getInstance();
 		dataInicio.set(2019, 0, 01);
-		Calendar dataFim = Calendar.getInstance(); 
+
+		Calendar dataFim = Calendar.getInstance();
 		dataFim.set(2019, 0, 12);
-
-		List<Vazao> listaVazao = this.vazaoRepository.findAll();
-
-		List<Atendimento> resultado = this.atendimentoRepository.findAll();
-
 
 		for (int i = 1; i < 13; i++) {
 			Calendar dataCalendar = Calendar.getInstance();
@@ -63,7 +62,11 @@ public class AtendimentoResource {
 			Date dataDate = new Date(dataCalendar.getTimeInMillis());
 			listaPeriodoDate.add(dataDate);
 		}
-		
+
+		List<Vazao> listaVazao = this.vazaoRepository.findAll();
+
+		List<Atendimento> resultado = this.atendimentoRepository.findAll();
+
 		/**
 		 * Add as datas que não tiveram atendimentos em listaDataSemAtendimento
 		 */
@@ -76,7 +79,7 @@ public class AtendimentoResource {
 				listaDataSemAtendimento.add(data);
 			}
 		}
-		
+
 		/**
 		 * remove as datas que não tiveram atendimento da listaPeriodoDate
 		 */
@@ -90,115 +93,118 @@ public class AtendimentoResource {
 			}
 
 		}
-		
+
 		// ordena as datas por ordem crescente
 		Collections.sort(listaPeriodoDate, (o1, o2) -> {
 			final Date v1 = (Date) o1;
 			final Date v2 = (Date) o2;
 			return v1.compareTo(v2) == 1 ? +1 : (v1.compareTo(v2) == -1 ? -1 : 0);
 		});
-		
+
 		/**
 		 * Agrupando os atendimentos por tipo de solicitacao
-		 * collectAgrupadoPorTpoSolicitacao é uma coleção com vários objs do
-		 * tipo chave/valor onde a chave é o tipoSolicitacao e o valor é a lista
-		 * de atendimentos
+		 * collectAgrupadoPorTpoSolicitacao é uma coleção com vários objs do tipo
+		 * chave/valor onde a chave é o tipoSolicitacao e o valor é a lista de
+		 * atendimentos
 		 * 
 		 */
-		Map<String, List<Atendimento>> collectAgrupadoPorTpoSolicitacao = resultado
-				.parallelStream().collect(Collectors.groupingBy(e -> e.getTipoSolicitacao().getDescricaoTpoSolicitacao()));
-		
+		Map<String, List<Atendimento>> collectAgrupadoPorTpoSolicitacao = resultado.parallelStream()
+				.collect(Collectors.groupingBy(e -> e.getTipoSolicitacao().getDescricaoTpoSolicitacao()));
+
 		/**
-		 * varre a coleção collectAgrupadoPorTpoSolicitacao, entradaTipoSolicitacao é um obj
-		 * chave/valor onde a chave é o tipoSolicitacao e o valor é a lista de
+		 * varre a coleção collectAgrupadoPorTpoSolicitacao, entradaTipoSolicitacao é um
+		 * obj chave/valor onde a chave é o tipoSolicitacao e o valor é a lista de
 		 * atendimentos
 		 */
 		for (Entry<String, List<Atendimento>> entradaTipoSolicitacao : collectAgrupadoPorTpoSolicitacao.entrySet()) {
-			
-			List<Vazao> listaAtendimentoPorVazao = new ArrayList<>();
+
+			List<VazaoDTO> listaAtendimentoPorVazao = new ArrayList<>();
 
 			/**
-			 * pega o tipo de solicitacao dessa colecao para poder usar em uma
-			 * list de relatorioCorteMedicaoDTO vazia.
+			 * pega o tipo de solicitacao dessa colecao para poder usar em uma list de
+			 * atendimento vazia.
 			 */
 			Atendimento atendimento = new Atendimento();
 
 			atendimento = entradaTipoSolicitacao.getValue().get(0);
 
 			/**
-			 * Agrupando os atendimentos de cada tipo de solicitacao por vazao
+			 * Agrupando os atendimentos de cada tipo de solicitacao por vazao.
 			 * collectAgrupadaPorVazao é uma coleção com vários objs do tipo chave/valor
 			 * onde a chave é a vazao e o valor é a lista de atendimentos
 			 * 
 			 */
-			Map<Long, List<Atendimento>> collectAgrupadaPorVazao = entradaTipoSolicitacao.getValue()
-					.parallelStream().collect(Collectors.groupingBy((e) -> e.getOrdemVazao()));
-			
+			Map<Long, List<Atendimento>> collectAgrupadaPorVazao = entradaTipoSolicitacao.getValue().parallelStream()
+					.collect(Collectors.groupingBy((e) -> e.getOrdemVazao()));
+
 			Map<Long, List<Atendimento>> newCollectAgrupadaPorVazao = new HashMap<Long, List<Atendimento>>();
-			
+
 			/**
 			 * varre a coleção collectAgrupadaPorVazao, por que? porque precisa resolver o
 			 * problema das datas repetidas por canteiros diferentes. entradaVazao é um obj
 			 * chave/valor onde a chave é a vazao e o valor é a lista de atendimentos
 			 */
 			for (Entry<Long, List<Atendimento>> entradaVazao : collectAgrupadaPorVazao.entrySet()) {
-				// vazao 
+				// vazao
 				Long vazao = entradaVazao.getKey();
-				// lista de atendimentos de uma vazao				
+				// lista de atendimentos de uma vazao
 				List<Atendimento> listaSemDatasRepetidas = new ArrayList<>();
-				
+
 				/**
-				 * Agrupando os atendimentos de cada vazao por
-				 * data. collectAgrupadaPorData é uma coleção com vários objs
-				 * do tipo chave/valor onde a chave é a data e o valor é a
-				 * lista de atendimentos
+				 * Agrupando os atendimentos de cada vazao por data. collectAgrupadaPorData é
+				 * uma coleção com vários objs do tipo chave/valor onde a chave é a data e o
+				 * valor é a lista de atendimentos
 				 * 
-				 */				
+				 */
 				Map<Date, List<Atendimento>> collectAgrupadaPorData = entradaVazao.getValue().parallelStream()
 						.collect(Collectors.groupingBy((e) -> e.getDataVisita()));
-				
+
 				/**
 				 * varre a coleção collectAgrupadaPorData, se a lista de atendimentos for maior
 				 * que 1 quer dizer que existe dois atendimentos para o mesmo dia. por que?
-				 * porque cada dia é de um canteiro diferentes.
-				 * entradaData é um obj chave/valor onde a chave é a data e o
-				 * valor é a lista de atendimentos
+				 * porque cada dia é de um canteiro diferentes. entradaData é um obj chave/valor
+				 * onde a chave é a data e o valor é a lista de atendimentos
 				 */
 				for (Entry<Date, List<Atendimento>> entradaData : collectAgrupadaPorData.entrySet()) {
-				
+
 					if (entradaData.getValue().size() > 1) {
 
 						// lista de atendimento de uma data
 						List<Atendimento> lista = entradaData.getValue();
-												
+
 						Atendimento modeloParaData = new Atendimento();
-						
+
 						modeloParaData = lista.get(0);
-						
-						Optional<Long> totalExec = lista.parallelStream().map(e->e.getQtdAtuacoesExecutadas()).reduce((e1,e2)-> e1+ e2);
-						Optional<Long> totalOcor = lista.parallelStream().map(e->e.getQtdAtuacoesOcorrencias()).reduce((e1,e2)-> e1+ e2);
-						Optional<Long> totalTotal = lista.parallelStream().map(e->e.getQtdAtuacoesTotal()).reduce((e1,e2)-> e1+ e2);
-						
+
+						// reduz a um dia de atendimento
+						Optional<Long> totalExec = lista.parallelStream().map(e -> e.getQtdAtuacoesExecutadas())
+								.reduce((e1, e2) -> e1 + e2);
+						Optional<Long> totalOcor = lista.parallelStream().map(e -> e.getQtdAtuacoesOcorrencias())
+								.reduce((e1, e2) -> e1 + e2);
+						Optional<Long> totalTotal = lista.parallelStream().map(e -> e.getQtdAtuacoesTotal())
+								.reduce((e1, e2) -> e1 + e2);
+
 						modeloParaData.setQtdAtuacoesExecutadas(totalExec.orElse(0l));
 						modeloParaData.setQtdAtuacoesOcorrencias(totalOcor.orElse(0l));
 						modeloParaData.setQtdAtuacoesTotal(totalTotal.orElse(0l));
-						
+
 						listaSemDatasRepetidas.add(modeloParaData);
-												
-					}else {
+
+					} else {
+						// quer dizer que eh tem apenas um atendimento para essa data
 						listaSemDatasRepetidas.add(entradaData.getValue().get(0));
 					}
-					
+
 				}
 
-				// sem as datas repetidas
+				// nova coleção agrupada por vazao sem as datas repetidas
 				newCollectAgrupadaPorVazao.put(vazao, listaSemDatasRepetidas);
-				
-				
+
 			}
-			
+
 			/**
-			 * se o tipo de solicitacao não tiver todas as vazões, add vazao que está faltando
+			 * se o tipo de solicitacao não tiver todas as vazões, add vazao que está
+			 * faltando
 			 * 
 			 */
 			if (listaVazao.size() > newCollectAgrupadaPorVazao.size()) {
@@ -218,8 +224,8 @@ public class AtendimentoResource {
 						List<Atendimento> listaDeAtendimentoPorVazaoVazia = new ArrayList<>();
 
 						for (Date date : listaPeriodoDate) {
-							Atendimento atendimentoZerado = new Atendimento(date,
-									atendimento.getTipoSolicitacao(), vazao.getCodigoVazao(),vazao.getDescricaoVazao(), 0l, 0l, 0l);
+							Atendimento atendimentoZerado = new Atendimento(date, atendimento.getTipoSolicitacao(),
+									vazao.getCodigoVazao(), vazao.getDescricaoVazao(), 0l, 0l, 0l);
 							listaDeAtendimentoPorVazaoVazia.add(atendimentoZerado);
 						}
 
@@ -229,20 +235,19 @@ public class AtendimentoResource {
 				}
 
 			}
-			
-			
+
 			/**
 			 * varre a coleção newCollectAgrupadaPorVazao, entradaVazao é um obj chave/valor
 			 * onde a chave é a vazao e o valor é a lista de atendimentos
 			 */
-			
-			for (Entry<Long, List<Atendimento>> entradaVazao : newCollectAgrupadaPorVazao.entrySet()) {	
+
+			for (Entry<Long, List<Atendimento>> entradaVazao : newCollectAgrupadaPorVazao.entrySet()) {
 				// pega qualquer obj da lista de atendimentos de uma determinada vazao
-				Atendimento modelo = entradaVazao.getValue().get(0);								
+				Atendimento modelo = entradaVazao.getValue().get(0);
 
 				/**
-				 * se existirem mais dias que na lista de atendimentos de uma
-				 * vazao add dia vazio para esta vazao
+				 * se existirem mais dias que na lista de atendimentos de uma vazao add dia
+				 * vazio para esta vazao
 				 */
 				if (listaPeriodoDate.size() > entradaVazao.getValue().size()) {
 
@@ -255,56 +260,56 @@ public class AtendimentoResource {
 
 							Atendimento atendimentoZerado = new Atendimento
 
-							(data, atendimento.getTipoSolicitacao(), modelo.getOrdemVazao(), modelo.getDescricaoVazao(), 0l, 0l, 0l);
+							(data, atendimento.getTipoSolicitacao(), modelo.getOrdemVazao(), modelo.getDescricaoVazao(),
+									0l, 0l, 0l);
 
 							entradaVazao.getValue().add(atendimentoZerado);
 
 						}
 					}
 				}
-				
+
 				// ordenar lista de vazao por data
 				ordenarListaVazao(entradaVazao);
 
-				Optional<Long> totalExec = entradaVazao.getValue().parallelStream().map(e -> e.getQtdAtuacoesExecutadas())
-						.reduce((e1, e2) -> e1 + e2);
+				Optional<Long> totalExec = entradaVazao.getValue().parallelStream()
+						.map(e -> e.getQtdAtuacoesExecutadas()).reduce((e1, e2) -> e1 + e2);
 
-				Optional<Long> totalOcor = entradaVazao.getValue().parallelStream().map(e -> e.getQtdAtuacoesOcorrencias())
-						.reduce((e1, e2) -> e1 + e2);
+				Optional<Long> totalOcor = entradaVazao.getValue().parallelStream()
+						.map(e -> e.getQtdAtuacoesOcorrencias()).reduce((e1, e2) -> e1 + e2);
 
 				Optional<Long> totalTotal = entradaVazao.getValue().parallelStream().map(e -> e.getQtdAtuacoesTotal())
 						.reduce((e1, e2) -> e1 + e2);
 
-				TotalAtuacao totalAtuacao = new TotalAtuacao(totalExec.orElse(0l), totalOcor.orElse(0l),
+				TotalAtuacaoDTO totalAtuacaoDTO = new TotalAtuacaoDTO(totalExec.orElse(0l), totalOcor.orElse(0l),
 						totalTotal.orElse(0l));
 
-				Vazao vazao = new Vazao(modelo.getOrdemVazao(), modelo.getDescricaoVazao(), entradaVazao.getValue(), totalAtuacao);
+				VazaoDTO vazaoDTO = new VazaoDTO(new Vazao(modelo.getOrdemVazao(), modelo.getDescricaoVazao()),
+						entradaVazao.getValue(), totalAtuacaoDTO);
 
-				listaAtendimentoPorVazao.add(vazao);
-				
+				listaAtendimentoPorVazao.add(vazaoDTO);
+
 			}
-			
+
 			ordenarVazaoPorDescricao(listaAtendimentoPorVazao);
 
-			tipoSolicitacao = new TipoSolicitacao(listaAtendimentoPorVazao,
-					atendimento.getTipoSolicitacao());
+			tipoSolicitacaoDTO = new TipoSolicitacaoDTO(atendimento.getTipoSolicitacao(), listaAtendimentoPorVazao);
 
-			relatorioCorteMedicaoResponse.addTipoSolicitacao(tipoSolicitacao);
-			
-			
-			
-			
-		}		
-		
-			
-		
+			relatorio.addTipoSolicitacao(tipoSolicitacaoDTO);
 
-		return resultado;
+		}
+
+		return relatorio;
 	}
 
-	private void ordenarVazaoPorDescricao(List<Vazao> listaAtendimentoPorVazao) {
-		// TODO Auto-generated method stub
-		
+	private void ordenarVazaoPorDescricao(List<VazaoDTO> listaAtendimentoPorVazao) {
+		Collections.sort(listaAtendimentoPorVazao, (o1, o2) -> {
+			final VazaoDTO v1 = (VazaoDTO) o1;
+			final VazaoDTO v2 = (VazaoDTO) o2;
+			return v1.getVazao().getCodigoVazao().compareTo(v2.getVazao().getCodigoVazao()) == 1 ? +1
+					: v1.getVazao().getCodigoVazao().compareTo(v2.getVazao().getCodigoVazao()) == -1 ? -1 : 0;
+		});
+
 	}
 
 	private void ordenarListaVazao(Entry<Long, List<Atendimento>> entry2) {

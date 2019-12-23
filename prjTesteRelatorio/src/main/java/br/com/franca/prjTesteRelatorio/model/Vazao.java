@@ -17,25 +17,22 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 public class Vazao implements Serializable {
-		
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -7897963882949814084L;
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Long codigoVazao;
 	private String descricaoVazao;
-	private List<Atendimento> listaDeAtendimentos;
-	private TotalAtuacao totalAtuacaoDTO;
-	
-	public Vazao(Long codigoVazao, String descricaoVazao, List<Atendimento> listaDeAtendimentos, TotalAtuacao totalAtuacao) {
+
+	public Vazao(Long codigoVazao, String descricaoVazao) {
 		super();
 		this.codigoVazao = codigoVazao;
 		this.descricaoVazao = descricaoVazao;
-		this.listaDeAtendimentos = listaDeAtendimentos;
-		this.totalAtuacaoDTO = totalAtuacao;
 	}
+
 }

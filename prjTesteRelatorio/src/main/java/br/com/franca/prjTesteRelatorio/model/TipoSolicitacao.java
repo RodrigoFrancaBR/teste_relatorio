@@ -1,5 +1,6 @@
 package br.com.franca.prjTesteRelatorio.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import javax.persistence.Entity;
@@ -15,18 +16,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Entity
-public class TipoSolicitacao {
+public class TipoSolicitacao implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1677083461696430585L;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Long codigoTpoSolicitacao;
 	private String descricaoTpoSolicitacao;
-	private List<Vazao> listaAtendimentoPorVazao;
-	private TipoSolicitacao tipoSolicitacao;
-	
-public TipoSolicitacao(List<Vazao> listaAtendimentoPorVazao, TipoSolicitacao tipoSolicitacao) {
-		this.listaAtendimentoPorVazao = listaAtendimentoPorVazao;
-		this.tipoSolicitacao = tipoSolicitacao;
-	}
+
 }

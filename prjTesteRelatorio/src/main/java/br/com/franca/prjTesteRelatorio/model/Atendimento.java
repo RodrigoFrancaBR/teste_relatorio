@@ -22,12 +22,14 @@ public class Atendimento implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -1249587582579176180L;
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Long codigoLote;
 	private String descricaoLote;
 	private Date dataVisita;
+	
 	@OneToOne
 	private TipoSolicitacao tipoSolicitacao = new TipoSolicitacao();
 	private String nomeCanteiro;
@@ -57,8 +59,5 @@ public class Atendimento implements Serializable {
 				+ qtdAtuacoesOcorrencias + ", qtdAtuacoesExecutadas=" + qtdAtuacoesExecutadas + ", qtdAtuacoesTotal="
 				+ qtdAtuacoesTotal + "]";
 	}
-	
-	
-	
 	
 }
